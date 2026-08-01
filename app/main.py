@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from app.database.database import Base
 from app.database.database import engine
 from app.utils.logger import logger
+from app.routers.upload import router as upload_router
 
 
 @asynccontextmanager
@@ -24,6 +25,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+app.include_router(upload_router)
 
 @app.get("/")
 def home():
