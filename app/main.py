@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-
+from app.models.dataset import Dataset
 from app.database.database import Base
 from app.database.database import engine
 from app.utils.logger import logger
