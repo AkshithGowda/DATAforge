@@ -1,14 +1,15 @@
-from app.repositories.dataset_repository import DatasetRepository
 from fastapi import UploadFile, HTTPException
+from sqlalchemy.orm import Session
+
 from app.core.config import settings
+from app.models.dataset import Dataset
+from app.repositories.dataset_repository import DatasetRepository
+from app.services.dataset_service import DatasetService
+
 import shutil
 import uuid
 from pathlib import Path
 from datetime import datetime
-from sqlalchemy.orm import Session
-
-from app.models.dataset import Dataset
-from app.repositories.dataset_repository import DatasetRepository
 
 class UploadService:
 
@@ -50,6 +51,11 @@ class UploadService:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
+        dataset_analysis = DatasetService.analyze_dataset(
+            file_path=file_path,
+            extension=extension
+        )
+
         dataset = Dataset(
             dataset_id=str(uuid.uuid4()),
             original_filename=file.filename,
@@ -62,9 +68,12 @@ class UploadService:
 
         DatasetRepository.create(db, dataset)
 
+
         return {
             "message": "File uploaded successfully",
             "dataset_id": dataset.dataset_id,
             "filename": dataset.original_filename,
-            "status": dataset.status
+            "status": dataset.status,
+            "file_size_mb": dataset.file_size_mb,
+            "analysis": dataset_analysis
         }
