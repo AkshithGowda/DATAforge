@@ -179,3 +179,34 @@ class DatasetService:
             pass
 
         return "STRING"
+
+    @staticmethod
+    def validate_schema(df):
+
+        validation = {}
+
+        for column in df.columns:
+
+            missing_percentage = round(
+                (df[column].isnull().sum() / len(df)) * 100,
+                2
+            )
+
+            if missing_percentage == 0:
+                quality = "EXCELLENT"
+
+            elif missing_percentage < 10:
+                quality = "GOOD"
+
+            elif missing_percentage < 30:
+                quality = "WARNING"
+
+            else:
+                quality = "POOR"
+
+            validation[column] = {
+                "missing_percentage": missing_percentage,
+                "quality": quality
+            }
+
+        return validation
