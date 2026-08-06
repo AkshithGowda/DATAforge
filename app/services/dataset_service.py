@@ -1,6 +1,14 @@
+import re
 import pandas as pd
+
 from pathlib import Path
 
+from pandas.api.types import (
+    is_integer_dtype,
+    is_float_dtype,
+    is_bool_dtype,
+    is_object_dtype
+)
 
 class DatasetService:
 
@@ -81,12 +89,16 @@ class DatasetService:
 
         duplicate_rows = DatasetService.check_duplicates(df)
 
+        schema = DatasetService.detect_schema(df)
+
         return {
             "summary": summary,
             "statistics": statistics,
             "missing_values": missing_values,
-            "duplicate_rows": duplicate_rows
-        }
+            "duplicate_rows": duplicate_rows,
+            "schema": schema
+        }            
+            
 
     @staticmethod
     def detect_schema(df):
@@ -95,22 +107,75 @@ class DatasetService:
 
         for column in df.columns:
 
-            dtype = str(df[column].dtype)
-
-            if dtype == "int64":
+            if is_integer_dtype(df[column]):
                 detected_type = "INTEGER"
 
-            elif dtype == "float64":
+            elif is_float_dtype(df[column]):
                 detected_type = "FLOAT"
 
-            elif dtype == "bool":
+            elif is_bool_dtype(df[column]):
                 detected_type = "BOOLEAN"
 
+            elif is_object_dtype(df[column]):
+                detected_type = DatasetService.infer_string_type(
+                    df[column]
+                )
+
             else:
-                detected_type = "STRING"
+                detected_type = "UNKNOWN"
+
+            nullable = bool(df[column].isnull().any())
+            unique_values = int(df[column].nunique())
+            sample_value = None
+
+            non_null = df[column].dropna()
+
+            if not non_null.empty:
+                sample_value = str(non_null.iloc[0])
 
             schema[column] = {
-                "type": detected_type
+                "type": detected_type,
+                "nullable": nullable,
+                "unique_values": unique_values,
+                "sample_value": sample_value
             }
 
         return schema
+
+
+    @staticmethod
+    def infer_string_type(series):
+
+        cleaned_series = (
+            series
+            .dropna()
+            .astype(str)
+        )
+
+        if cleaned_series.empty:
+            return "STRING"
+
+        sample = cleaned_series.iloc[0]
+
+        if re.match(r"\d{4}-\d{2}-\d{2}$", sample):
+            return "DATE"
+
+        if re.match(r"\d{2}:\d{2}:\d{2}", sample):
+            return "TIME"
+
+        if re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", sample):
+            return "EMAIL"
+
+        if sample.lower() in {"true", "false", "yes", "no"}:
+            return "BOOLEAN"
+
+        if sample.isdigit():
+            return "INTEGER"
+
+        try:
+            float(sample)
+            return "FLOAT"
+        except ValueError:
+            pass
+
+        return "STRING"
