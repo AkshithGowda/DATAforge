@@ -87,3 +87,30 @@ class DatasetService:
             "missing_values": missing_values,
             "duplicate_rows": duplicate_rows
         }
+
+    @staticmethod
+    def detect_schema(df):
+
+        schema = {}
+
+        for column in df.columns:
+
+            dtype = str(df[column].dtype)
+
+            if dtype == "int64":
+                detected_type = "INTEGER"
+
+            elif dtype == "float64":
+                detected_type = "FLOAT"
+
+            elif dtype == "bool":
+                detected_type = "BOOLEAN"
+
+            else:
+                detected_type = "STRING"
+
+            schema[column] = {
+                "type": detected_type
+            }
+
+        return schema
