@@ -14,3 +14,4 @@ async def upload_file(
     db: Session = Depends(get_db)
 ):
    return await UploadService.upload(file, db)
+

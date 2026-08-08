@@ -16,7 +16,7 @@ class DatasetService:
     def read_dataset(file_path: Path, extension: str):
 
         if extension == ".csv":
-            df = pd.read_csv(file_path)
+            df = pd.read_csv(file_path, encoding="latin1")
 
         elif extension == ".xlsx":
             df = pd.read_excel(file_path)
@@ -90,15 +90,24 @@ class DatasetService:
         duplicate_rows = DatasetService.check_duplicates(df)
 
         schema = DatasetService.detect_schema(df)
+        
+        validation = DatasetService.validate_schema(df)
+
+        recommendations = DatasetService.generate_recommendations(
+            df,
+            schema,
+            validation
+        )
 
         return {
             "summary": summary,
             "statistics": statistics,
             "missing_values": missing_values,
             "duplicate_rows": duplicate_rows,
-            "schema": schema
-        }            
-            
+            "schema": schema,
+            "validation": validation,
+            "recommendations": recommendations
+        }
 
     @staticmethod
     def detect_schema(df):
@@ -210,3 +219,41 @@ class DatasetService:
             }
 
         return validation
+
+
+    @staticmethod
+    def generate_recommendations(df, schema, validation):
+
+        recommendations = []
+
+        for column in df.columns:
+
+            if validation[column]["missing_percentage"] > 0:
+                recommendations.append(
+                    f"Consider filling missing values in '{column}'."
+                )
+
+            if schema[column]["type"] == "DATE":
+                recommendations.append(
+                    f"Convert '{column}' to datetime for time-based analysis."
+                )
+
+            if schema[column]["type"] == "TIME":
+                recommendations.append(
+                    f"Convert '{column}' to time format."
+                )
+
+            if (
+                schema[column]["type"] == "STRING"
+                and schema[column]["unique_values"] < 20
+            ):
+                recommendations.append(
+                    f"'{column}' may be treated as a categorical feature."
+                )
+
+        if df.duplicated().sum() > 0:
+            recommendations.append(
+                "Consider removing duplicate rows."
+            )
+
+        return recommendations
