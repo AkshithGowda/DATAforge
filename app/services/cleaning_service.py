@@ -22,21 +22,35 @@ class CleaningService:
 
         missing_before = int(df.isnull().sum().sum())
 
+        filled_columns = []
+
         for column in df.columns:
 
             if df[column].isnull().sum() == 0:
                 continue
 
             if pd.api.types.is_numeric_dtype(df[column]):
-                df[column] = df[column].fillna(df[column].median())
+
+                df[column] = df[column].fillna(
+                    df[column].median()
+                )
+
+                method = "median"
 
             else:
+
                 df[column] = df[column].fillna("Unknown")
+
+                method = "Unknown"
+
+            filled_columns.append({
+                "column": column,
+                "method": method
+            })
 
         missing_after = int(df.isnull().sum().sum())
 
-        return df, missing_before, missing_after
-
+        return df, missing_before, missing_after, filled_columns
     @staticmethod
     def clean_dataset(df):
 
