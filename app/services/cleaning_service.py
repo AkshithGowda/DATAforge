@@ -1,5 +1,7 @@
 import pandas as pd
+from pathlib import Path
 
+from app.core.config import settings
 
 class CleaningService:
 
@@ -38,18 +40,54 @@ class CleaningService:
     @staticmethod
     def clean_dataset(df):
 
-            original_rows = len(df)
+        original_rows = len(df)
 
-            df, duplicates_removed = CleaningService.remove_duplicates(df)
+        df, duplicates_removed = CleaningService.remove_duplicates(df)
 
-            df, missing_before, missing_after = (
-                CleaningService.handle_missing_values(df)
-            )
+        df, missing_before, missing_after = (
+            CleaningService.handle_missing_values(df)
+        )
 
-            return df, {
-                "original_rows": original_rows,
-                "final_rows": len(df),
-                "duplicates_removed": duplicates_removed,
-                "missing_values_before": missing_before,
-                "missing_values_after": missing_after
-            }
+        df, converted_columns = (
+            CleaningService.convert_numeric_columns(df)
+        )
+
+        return df, {
+            "original_rows": original_rows,
+            "final_rows": len(df),
+            "duplicates_removed": duplicates_removed,
+            "missing_values_before": missing_before,
+            "missing_values_after": missing_after,
+            "converted_columns": converted_columns
+        }
+
+    
+    @staticmethod
+    def convert_numeric_columns(df):
+
+            converted_columns = []
+
+            for column in df.columns:
+
+                converted = pd.to_numeric(
+                    df[column],
+                    errors="ignore"
+                )
+
+                if not converted.equals(df[column]):
+                    df[column] = converted
+                    converted_columns.append(column)
+
+            return df, converted_columns
+
+
+    @staticmethod
+    def save_cleaned_dataset(df, original_filename):
+
+            filename = Path(original_filename).stem + "_cleaned.csv"
+
+            file_path = Path(settings.CLEANED_DIR) / filename
+
+            df.to_csv(file_path, index=False)
+
+            return file_path

@@ -10,6 +10,7 @@ import shutil
 import uuid
 from pathlib import Path
 from datetime import datetime
+from app.services.cleaning_service import CleaningService
 
 class UploadService:
 
@@ -56,6 +57,18 @@ class UploadService:
             extension=extension
         )
 
+        df = DatasetService.read_dataset(
+            file_path=file_path,
+            extension=extension
+        )
+
+        cleaned_df, cleaning_report = CleaningService.clean_dataset(df)
+
+        cleaned_file_path = CleaningService.save_cleaned_dataset(
+            cleaned_df,
+            file.filename
+        )
+
         dataset = Dataset(
             dataset_id=str(uuid.uuid4()),
             original_filename=file.filename,
@@ -75,5 +88,7 @@ class UploadService:
             "filename": dataset.original_filename,
             "status": dataset.status,
             "file_size_mb": dataset.file_size_mb,
-            "analysis": dataset_analysis
+            "analysis": dataset_analysis,
+            "cleaning_report": cleaning_report,
+            "cleaned_file": str(cleaned_file_path)
         }
