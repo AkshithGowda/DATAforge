@@ -51,6 +51,9 @@ class CleaningService:
         missing_after = int(df.isnull().sum().sum())
 
         return df, missing_before, missing_after, filled_columns
+
+
+    
     @staticmethod
     def clean_dataset(df):
 
@@ -58,13 +61,11 @@ class CleaningService:
 
         df, duplicates_removed = CleaningService.remove_duplicates(df)
 
-        df, missing_before, missing_after = (
+        df, missing_before, missing_after, filled_columns = (
             CleaningService.handle_missing_values(df)
         )
 
-        df, converted_columns = (
-            CleaningService.convert_numeric_columns(df)
-        )
+        df, converted_columns = CleaningService.convert_numeric_columns(df)
 
         return df, {
             "original_rows": original_rows,
@@ -72,28 +73,49 @@ class CleaningService:
             "duplicates_removed": duplicates_removed,
             "missing_values_before": missing_before,
             "missing_values_after": missing_after,
+            "filled_columns": filled_columns,
             "converted_columns": converted_columns
         }
-
-    
+        
     @staticmethod
     def convert_numeric_columns(df):
 
-            converted_columns = []
+        converted_columns = []
 
-            for column in df.columns:
+        for column in df.columns:
 
-                converted = pd.to_numeric(
-                    df[column],
-                    errors="ignore"
-                )
+            if not pd.api.types.is_object_dtype(df[column]):
+                continue
 
-                if not converted.equals(df[column]):
-                    df[column] = converted
-                    converted_columns.append(column)
+            cleaned = (
+                df[column]
+                .astype(str)
+                .str.replace(",", "", regex=False)
+                .str.replace("$", "", regex=False)
+                .str.strip()
+            )
 
-            return df, converted_columns
+            numeric_values = pd.to_numeric(
+                cleaned,
+                errors="coerce"
+            )
 
+            valid_values = numeric_values.notna().sum()
+            original_values = df[column].notna().sum()
+
+            if original_values > 0 and valid_values == original_values:
+
+                df[column] = numeric_values
+
+                converted_columns.append({
+                    "column": column,
+                    "from": "object",
+                    "to": "numeric"
+                })
+
+        return df, converted_columns
+
+    
 
     @staticmethod
     def save_cleaned_dataset(df, original_filename):
