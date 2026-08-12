@@ -30,3 +30,13 @@ class TransformationService:
         df = df.query(condition)
 
         return df
+
+    @staticmethod
+    def sort_rows(df, column, ascending=True):
+
+        df = df.sort_values(
+            by=column,
+            ascending=ascending
+        )
+
+        return df
