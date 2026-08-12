@@ -49,6 +49,10 @@ class ValidationService:
             ValidationService.check_negative_values(df)
         )
 
+        warnings.extend(
+            ValidationService.check_outliers(df)
+        )
+
         return {
             "valid": len(errors) == 0,
             "errors": errors,
