@@ -52,6 +52,36 @@ class CleaningService:
 
         return df, missing_before, missing_after, filled_columns
 
+    @staticmethod
+    def convert_datetime_columns(df):
+
+        datetime_columns = []
+
+        for column in df.columns:
+
+            if not pd.api.types.is_object_dtype(df[column]):
+                continue
+
+            converted = pd.to_datetime(
+                df[column],
+                errors="coerce",
+                format="mixed"
+            )
+
+            valid_values = converted.notna().sum()
+            original_values = df[column].notna().sum()
+
+            if original_values > 0 and valid_values == original_values:
+
+                df[column] = converted
+
+                datetime_columns.append({
+                    "column": column,
+                    "from": "object",
+                    "to": "datetime"
+                })
+
+        return df, datetime_columns
 
     
     @staticmethod
@@ -66,6 +96,8 @@ class CleaningService:
         )
 
         df, converted_columns = CleaningService.convert_numeric_columns(df)
+        df, datetime_columns = CleaningService.convert_datetime_columns(df)
+
 
         return df, {
             "original_rows": original_rows,
@@ -75,6 +107,7 @@ class CleaningService:
             "missing_values_after": missing_after,
             "filled_columns": filled_columns,
             "converted_columns": converted_columns
+            
         }
         
     @staticmethod

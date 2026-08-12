@@ -11,6 +11,7 @@ import uuid
 from pathlib import Path
 from datetime import datetime
 from app.services.cleaning_service import CleaningService
+from app.services.validation_service import ValidationService
 
 class UploadService:
 
@@ -63,6 +64,8 @@ class UploadService:
         )
 
         cleaned_df, cleaning_report = CleaningService.clean_dataset(df)
+        
+        validation_report = ValidationService.validate_dataset(cleaned_df)
 
         cleaned_file_path = CleaningService.save_cleaned_dataset(
             cleaned_df,
@@ -90,5 +93,6 @@ class UploadService:
             "file_size_mb": dataset.file_size_mb,
             "analysis": dataset_analysis,
             "cleaning_report": cleaning_report,
+            "validation_report": validation_report,
             "cleaned_file": str(cleaned_file_path)
         }
