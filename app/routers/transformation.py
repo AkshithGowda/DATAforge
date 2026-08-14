@@ -9,7 +9,10 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.services.dataset_service import DatasetService
+from datetime import datetime
 
+from app.models.transformation_history import TransformationHistory
+from app.repositories.transformation_history_repository import TransformationHistoryRepository
 router = APIRouter(
     prefix="/transform",
     tags=["Transformation"]
@@ -39,6 +42,8 @@ async def transform_dataset(
         file_path=file_path,
         extension=dataset.extension
     )
+
+    input_rows = len(df)
 
     if request.rename_columns:
         df = TransformationService.rename_columns(
@@ -75,6 +80,28 @@ async def transform_dataset(
         df,
         dataset.original_filename
     )
+
+    history = TransformationHistory(
+        dataset_id=dataset.dataset_id,
+        operation="TRANSFORMATION",
+        input_rows=input_rows,
+        output_rows=len(df),
+        created_at=datetime.now()
+    )
+
+    TransformationHistoryRepository.create(db, history)
+
+@router.get("/history/{dataset_id}")
+def get_history(
+        dataset_id: str,
+        db: Session = Depends(get_db)
+ ):
+    history = TransformationHistoryRepository.get_by_dataset_id(
+        db,
+        dataset_id
+    )
+
+    return history
 
     return {
         "message": "Transformation successful",

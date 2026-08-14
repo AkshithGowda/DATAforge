@@ -8,7 +8,8 @@ from app.database.database import engine
 from app.utils.logger import logger
 
 from app.routers import upload, transformation
-
+from app.models.transformation_history import TransformationHistory
+from app.routers import transformation
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,7 +31,7 @@ app = FastAPI(
 
 app.include_router(upload.router)
 app.include_router(transformation.router)
-
+app.include_router(transformation.router)
 
 @app.get("/")
 def home():

@@ -256,4 +256,14 @@ class DatasetService:
                 "Consider removing duplicate rows."
             )
 
-        return recommendations
+    @staticmethod
+    def generate_profile(df):
+
+        return {
+            "summary": DatasetService.generate_summary(df),
+            "statistics": DatasetService.generate_statistics(df),
+            "missing_values": DatasetService.check_missing_values(df),
+            "duplicate_rows": DatasetService.check_duplicates(df),
+            "schema": DatasetService.detect_schema(df),
+            "validation": DatasetService.validate_schema(df)
+        }
