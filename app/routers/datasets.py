@@ -37,11 +37,15 @@ def get_dataset_profile(
         file_path=file_path,
         extension=dataset.extension
     )
-
     profile = DatasetService.generate_profile(df)
+    report_path = DatasetService.save_profile_report(
+        profile,
+        dataset.original_filename
+    )
 
     return {
         "dataset_id": dataset.dataset_id,
         "filename": dataset.original_filename,
-        "profile": profile
+        "profile": profile,
+        "report_file": str(report_path)
     }

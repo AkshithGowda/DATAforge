@@ -29,7 +29,7 @@ class DatasetService:
 
         return df
 
-
+    
     @staticmethod
     def generate_summary(df):
 
@@ -256,6 +256,18 @@ class DatasetService:
                 "Consider removing duplicate rows."
             )
 
+            
+    @staticmethod
+    def save_profile_report(profile, filename):
+
+        report_path = Path("reports") / f"{filename}_profile.json"
+
+        with open(report_path, "w") as file:
+            json.dump(profile, file, indent=4, default=str)
+
+        return report_path
+
+    
     @staticmethod
     def generate_profile(df):
 
