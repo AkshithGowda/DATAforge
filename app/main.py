@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-
+from app.routers import datasets
 from app.models.dataset import Dataset
 from app.database.database import Base
 from app.database.database import engine
@@ -31,7 +31,7 @@ app = FastAPI(
 
 app.include_router(upload.router)
 app.include_router(transformation.router)
-app.include_router(transformation.router)
+app.include_router(datasets.router)
 
 @app.get("/")
 def home():
