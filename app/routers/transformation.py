@@ -46,9 +46,40 @@ async def transform_dataset(
             request.rename_columns
         )
 
+    if request.drop_columns:
+        df = TransformationService.drop_columns(
+            df,
+            request.drop_columns
+        )
+
+    if request.select_columns:
+        df = TransformationService.select_columns(
+            df,
+            request.select_columns
+        )
+
+    if request.filter_condition:
+        df = TransformationService.filter_rows(
+            df,
+            request.filter_condition
+        )
+
+    if request.sort_column:
+        df = TransformationService.sort_rows(
+            df,
+            request.sort_column,
+            request.sort_ascending
+        )
+
+    transformed_file = TransformationService.save_transformed_dataset(
+        df,
+        dataset.original_filename
+    )
+
     return {
         "message": "Transformation successful",
         "dataset_id": dataset.dataset_id,
         "rows": len(df),
-        "columns": list(df.columns)
+        "columns": list(df.columns),
+        "transformed_file": str(transformed_file)
     }
