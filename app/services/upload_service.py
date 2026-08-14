@@ -82,7 +82,11 @@ class UploadService:
             status="UPLOADED"
         )
 
+        print("ABOUT TO SAVE DATASET:", dataset.dataset_id)
+
         DatasetRepository.create(db, dataset)
+
+        print("DATASET SAVED:", dataset.dataset_id)
 
 
         return {
