@@ -6,7 +6,7 @@ from app.models.dataset import Dataset
 from app.database.database import Base
 from app.database.database import engine
 from app.utils.logger import logger
-
+from app.models.cleaning_history import CleaningHistory
 from app.routers import upload, transformation
 from app.models.transformation_history import TransformationHistory
 from app.routers import transformation

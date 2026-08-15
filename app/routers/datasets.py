@@ -1,12 +1,15 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from pathlib import Path
-
+from app.services.cleaning_service import CleaningService
 from app.database.database import get_db
 from app.repositories.dataset_repository import DatasetRepository
 from app.services.dataset_service import DatasetService
 from app.core.config import settings
+from datetime import datetime
 
+from app.models.cleaning_history import CleaningHistory
+from app.repositories.cleaning_history_repository import CleaningHistoryRepository
 
 router = APIRouter(
     prefix="/datasets",
@@ -14,12 +17,11 @@ router = APIRouter(
 )
 
 
-@router.get("/{dataset_id}/profile")
-def get_dataset_profile(
+@router.post("/{dataset_id}/clean")
+def clean_dataset(
     dataset_id: str,
     db: Session = Depends(get_db)
 ):
-
     dataset = DatasetRepository.get_by_id(
         db,
         dataset_id
@@ -37,15 +39,43 @@ def get_dataset_profile(
         file_path=file_path,
         extension=dataset.extension
     )
-    profile = DatasetService.generate_profile(df)
-    report_path = DatasetService.save_profile_report(
-        profile,
+
+    df, cleaning_info = CleaningService.clean_dataset(df)
+
+    history = CleaningHistory(
+        dataset_id=dataset.dataset_id,
+        original_rows=cleaning_info["original_rows"],
+        final_rows=cleaning_info["final_rows"],
+        duplicates_removed=cleaning_info["duplicates_removed"],
+        missing_values_before=cleaning_info["missing_values_before"],
+        missing_values_after=cleaning_info["missing_values_after"],
+        created_at=datetime.now()
+    )
+
+    CleaningHistoryRepository.create(db, history)
+
+    cleaned_file = CleaningService.save_cleaned_dataset(
+        df,
         dataset.original_filename
     )
 
     return {
+        "message": "Dataset cleaned successfully",
         "dataset_id": dataset.dataset_id,
-        "filename": dataset.original_filename,
-        "profile": profile,
-        "report_file": str(report_path)
+        "cleaning_info": cleaning_info,
+        "cleaned_file": str(cleaned_file)
     }
+
+
+@router.get("/{dataset_id}/cleaning-history")
+def get_cleaning_history(
+    dataset_id: str,
+    db: Session = Depends(get_db)
+):
+
+    history = CleaningHistoryRepository.get_by_dataset_id(
+        db,
+        dataset_id
+    )
+
+    return history

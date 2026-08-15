@@ -106,8 +106,8 @@ class CleaningService:
             "missing_values_before": missing_before,
             "missing_values_after": missing_after,
             "filled_columns": filled_columns,
-            "converted_columns": converted_columns
-            
+            "converted_columns": converted_columns,
+            "datetime_columns": datetime_columns
         }
         
     @staticmethod
