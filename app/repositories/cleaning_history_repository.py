@@ -13,6 +13,8 @@ class CleaningHistoryRepository:
         db.refresh(history)
 
         return history
+
+
     @staticmethod
     def get_by_dataset_id(db: Session, dataset_id: str):
 

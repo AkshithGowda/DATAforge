@@ -24,10 +24,18 @@ class ValidationService:
         return warnings
 
     @staticmethod
-    def validate_dataset(df):
+    def validate_dataset(df, required_columns=None):
 
         errors = []
         warnings = []
+
+        if required_columns:
+            errors.extend(
+                ValidationService.check_required_columns(
+                    df,
+                    required_columns
+                )
+            )
 
         if df.empty:
             errors.append("Dataset is empty.")
@@ -89,3 +97,17 @@ class ValidationService:
                 )
 
         return warnings
+        
+    @staticmethod
+    def check_required_columns(df, required_columns):
+
+        errors = []
+
+        for column in required_columns:
+
+            if column not in df.columns:
+                errors.append(
+                    f"Required column '{column}' is missing."
+                )
+
+        return errors

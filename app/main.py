@@ -10,6 +10,7 @@ from app.models.cleaning_history import CleaningHistory
 from app.routers import upload, transformation
 from app.models.transformation_history import TransformationHistory
 from app.routers import transformation
+from app.models.validation_history import ValidationHistory
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

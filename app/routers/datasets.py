@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from pathlib import Path
@@ -7,9 +8,11 @@ from app.repositories.dataset_repository import DatasetRepository
 from app.services.dataset_service import DatasetService
 from app.core.config import settings
 from datetime import datetime
-
+from app.services.validation_service import ValidationService
 from app.models.cleaning_history import CleaningHistory
 from app.repositories.cleaning_history_repository import CleaningHistoryRepository
+from app.models.validation_history import ValidationHistory
+from app.repositories.validation_history_repository import ValidationHistoryRepository
 
 router = APIRouter(
     prefix="/datasets",
@@ -74,6 +77,73 @@ def get_cleaning_history(
 ):
 
     history = CleaningHistoryRepository.get_by_dataset_id(
+        db,
+        dataset_id
+    )
+
+    return history
+
+@router.post("/{dataset_id}/validate")
+def validate_dataset(
+    dataset_id: str,
+    db: Session = Depends(get_db)
+):
+
+    dataset = DatasetRepository.get_by_id(
+        db,
+        dataset_id
+    )
+
+    if dataset is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Dataset not found."
+        )
+
+    file_path = Path(settings.UPLOAD_DIR) / dataset.stored_filename
+
+    df = DatasetService.read_dataset(
+        file_path=file_path,
+        extension=dataset.extension
+    )
+
+    required_columns = [
+        "movie_title",
+        "imdb_score",
+        "title_year"
+    ]
+
+    validation = ValidationService.validate_dataset(
+        df,
+        required_columns
+    )
+
+    history = ValidationHistory(
+        dataset_id=dataset.dataset_id,
+        valid=validation["valid"],
+        error_count=len(validation["errors"]),
+        warning_count=len(validation["warnings"]),
+        created_at=datetime.now()
+    )
+
+    ValidationHistoryRepository.create(db, history)
+
+
+    return {
+        "message": "Dataset validation completed",
+        "dataset_id": dataset.dataset_id,
+        "validation": validation
+    }
+
+
+
+@router.get("/{dataset_id}/validation-history")
+def get_validation_history(
+    dataset_id: str,
+    db: Session = Depends(get_db)
+):
+
+    history = ValidationHistoryRepository.get_by_dataset_id(
         db,
         dataset_id
     )
