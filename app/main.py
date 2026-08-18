@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
-
+from app.routers import pipelines
+from app.models.pipeline import Pipeline
 from fastapi import FastAPI
 from app.routers import datasets
 from app.models.dataset import Dataset
@@ -11,6 +12,8 @@ from app.routers import upload, transformation
 from app.models.transformation_history import TransformationHistory
 from app.routers import transformation
 from app.models.validation_history import ValidationHistory
+from app.models.pipeline_step import PipelineStep
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -33,6 +36,7 @@ app = FastAPI(
 app.include_router(upload.router)
 app.include_router(transformation.router)
 app.include_router(datasets.router)
+app.include_router(pipelines.router)
 
 @app.get("/")
 def home():

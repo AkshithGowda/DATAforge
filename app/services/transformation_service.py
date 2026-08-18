@@ -1,48 +1,102 @@
-import pandas as pd
-from pathlib import Path
-
 from app.core.config import settings
+from pathlib import Path
 
 
 class TransformationService:
 
     @staticmethod
+    def transform_dataset(
+        df,
+        rename_columns=None,
+        drop_columns=None,
+        select_columns=None,
+        filter_condition=None,
+        sort_column=None,
+        sort_ascending=True
+    ):
+
+        operations = []
+
+        if rename_columns:
+            df = TransformationService.rename_columns(
+                df,
+                rename_columns
+            )
+            operations.append("rename_columns")
+
+        if drop_columns:
+            df = TransformationService.drop_columns(
+                df,
+                drop_columns
+            )
+            operations.append("drop_columns")
+
+        if select_columns:
+            df = TransformationService.select_columns(
+                df,
+                select_columns
+            )
+            operations.append("select_columns")
+
+        if filter_condition:
+            df = TransformationService.filter_rows(
+                df,
+                filter_condition
+            )
+            operations.append("filter_rows")
+
+        if sort_column:
+            df = TransformationService.sort_rows(
+                df,
+                sort_column,
+                sort_ascending
+            )
+            operations.append("sort_rows")
+
+        transformation_info = {
+            "operations_applied": operations,
+            "rows": len(df),
+            "columns": list(df.columns)
+        }
+
+        return df, transformation_info
+
+    @staticmethod
     def rename_columns(df, column_mapping):
-        df = df.rename(columns=column_mapping)
-        return df
+
+        return df.rename(columns=column_mapping)
 
     @staticmethod
     def drop_columns(df, columns):
-        df = df.drop(columns=columns)
-        return df
+
+        return df.drop(columns=columns)
 
     @staticmethod
     def select_columns(df, columns):
-        df = df[columns]
-        return df
+
+        return df[columns]
 
     @staticmethod
     def filter_rows(df, condition):
-        df = df.query(condition)
-        return df
+
+        return df.query(condition)
 
     @staticmethod
     def sort_rows(df, column, ascending=True):
-        df = df.sort_values(
+
+        return df.sort_values(
             by=column,
             ascending=ascending
         )
-        return df
 
-    
-    
     @staticmethod
-    def save_transformed_dataset(df, original_filename):
+    def save_transformed_dataset(df, filename):
 
-        filename = f"{original_filename}_transformed.csv"
+        output_path = Path(settings.OUTPUT_DIR) / f"transformed_{filename}"
 
-        file_path = Path(settings.CLEANED_DIR) / filename
+        df.to_csv(
+            output_path,
+            index=False
+        )
 
-        df.to_csv(file_path, index=False)
-
-        return file_path
+        return output_path
